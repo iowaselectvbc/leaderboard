@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iowa Select Leaderboard Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@500;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/* ====== SETTINGS YOU MIGHT CHANGE ====== */
+:root{
+  --red:#D02627;          /* Iowa Select Red */
+  --led-red:#ff3236;      /* glowing points */
+  --led-yellow:#F5D90A;   /* Highlight Yellow: ranks */
+  --led-white:#f4f1ea;
+  --led-green:#35e07a;
+  --bg:#0c0d0e;
+  --panel:#151617;
+  --line:#2a2b2d;
+  --muted:#8b8d90;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--led-white)}
+body{
+  font-family:Montserrat,system-ui,sans-serif;
+  background-color:var(--bg);
+  background-image:radial-gradient(rgba(255,255,255,.045) 1px,transparent 1.2px);
+  background-size:6px 6px;
+  min-height:100vh;
+  padding:clamp(12px,3vw,32px);
+}
+.wrap{max-width:1240px;margin:0 auto}
+
+/* ---------- header ---------- */
+header{
+  position:relative;border:2px solid #000;border-radius:14px;overflow:hidden;
+  background:linear-gradient(180deg,#1b1c1e,#101112);
+  box-shadow:0 0 0 1px #2c2d30 inset,0 20px 50px rgba(0,0,0,.6);
+  padding:22px clamp(16px,3vw,32px) 18px;
+  display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;
+}
+header::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:var(--red)}
+.eyebrow{font-family:"Share Tech Mono",monospace;letter-spacing:.3em;color:var(--led-yellow);font-size:13px;text-transform:uppercase;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.eyebrow>span{white-space:nowrap}
+.live{display:inline-flex;align-items:center;gap:6px;color:#fff;background:var(--red);padding:2px 8px;border-radius:3px;letter-spacing:.15em}
+.live i{width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1.4s infinite}
+.demo{display:none;color:#000;background:var(--led-yellow);padding:2px 8px;border-radius:3px;letter-spacing:.15em}
+body.is-demo .demo{display:inline-block}
+body.is-demo .live{display:none}
+@keyframes blink{50%{opacity:.2}}
+h1{font-family:Anton,Impact,"Arial Narrow Bold",sans-serif;font-weight:400;text-transform:uppercase;line-height:.95;
+   font-size:clamp(30px,5.4vw,62px);letter-spacing:.01em;margin-top:6px}
+h1 span{color:var(--red)}
+.sub{color:var(--led-white);font-size:clamp(15px,1.8vw,19px);margin-top:10px;font-weight:700;letter-spacing:.02em}
+.clock{text-align:center;background:#060606;border:1px solid #000;border-radius:10px;padding:10px 16px 8px;box-shadow:0 0 0 1px #262729 inset}
+.clock .lbl{font-family:"Share Tech Mono",monospace;font-size:11px;letter-spacing:.25em;color:var(--muted);margin-top:4px}
+.clock .seg{height:58px}
+
+/* ---------- seven segment ---------- */
+.seg{display:inline-flex;gap:.12em;height:1em;vertical-align:middle}
+.seg svg{height:100%;width:auto;overflow:visible;transform:skewX(-7deg)}
+.seg .off{fill:currentColor;opacity:.07}
+.seg .on{fill:currentColor;filter:drop-shadow(0 0 2px currentColor) drop-shadow(0 0 6px currentColor)}
+.c-red{color:var(--led-red)}.c-yel{color:var(--led-yellow)}.c-wht{color:var(--led-white)}.c-grn{color:var(--led-green)}
+
+/* ---------- leaders strip ---------- */
+.leaders{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+.lead{position:relative;border-radius:12px;overflow:hidden;padding:16px 20px;
+  background:linear-gradient(120deg,#2a0c0d 0%,#161718 55%);border:1px solid #3a1718;
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.lead .k{font-family:"Share Tech Mono",monospace;font-size:12px;letter-spacing:.25em;color:var(--led-yellow)}
+.lead .n{font-family:Anton,Impact,"Arial Narrow Bold",sans-serif;font-size:clamp(22px,3vw,34px);text-transform:uppercase;line-height:1.05;margin-top:4px}
+.lead .t{color:var(--muted);font-size:13px;font-weight:700;margin-top:2px}
+.lead .seg{height:clamp(40px,5vw,56px)}
+.crown{position:absolute;right:-10px;top:-18px;font-family:Anton;font-size:120px;color:rgba(208,38,39,.08);pointer-events:none}
+
+/* ---------- tabs (mobile) ---------- */
+.tabs{display:none;gap:8px;margin-bottom:12px}
+.tabs button{flex:1;font:700 14px Montserrat;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;cursor:pointer}
+.tabs button.on{color:#fff;background:var(--red);border-color:var(--red)}
+
+/* ---------- boards ---------- */
+.boards{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.board{background:linear-gradient(180deg,#141516,#0f1011);border:2px solid #000;border-radius:14px;
+  box-shadow:0 0 0 1px #2a2b2e inset,0 20px 40px rgba(0,0,0,.5);overflow:hidden}
+.board h2{display:flex;justify-content:space-between;align-items:baseline;padding:16px 18px 12px;border-bottom:1px solid var(--line);
+  font-family:Anton,Impact,"Arial Narrow Bold",sans-serif;font-weight:400;text-transform:uppercase;font-size:26px;letter-spacing:.02em}
+.board h2 small{font-family:"Share Tech Mono",monospace;font-size:12px;color:var(--muted);letter-spacing:.2em}
+.cols,.row{display:grid;grid-template-columns:62px 1fr 52px 96px;align-items:center;gap:10px;padding:0 16px}
+.cols{font-family:"Share Tech Mono",monospace;font-size:11px;letter-spacing:.2em;color:var(--muted);padding-top:10px;padding-bottom:8px}
+.cols span:nth-child(3),.cols span:nth-child(4){text-align:right}
+.row{min-height:60px;padding-top:8px;padding-bottom:8px;border-top:1px solid #1d1e20;position:relative;opacity:0;transform:translateY(8px);
+  animation:flip .55s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes flip{to{opacity:1;transform:none}}
+.row:nth-child(even){background:rgba(255,255,255,.015)}
+.row .rk{font-family:Anton,Impact,"Arial Narrow Bold",sans-serif;font-size:30px;line-height:1;color:var(--led-white);text-align:center}
+.row .nm{min-width:0}
+.row .nm b{display:block;font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;letter-spacing:.02em}
+.row .nm em{display:block;font-style:normal;font-size:12px;color:var(--muted);font-weight:500;margin-top:1px}
+.wk{display:inline-block;margin-top:4px;font:800 12px Montserrat,sans-serif;letter-spacing:.04em;color:#0c0d0e;background:var(--led-green);padding:2px 7px;border-radius:4px}
+.row .mv{text-align:right;font-family:"Share Tech Mono",monospace;font-size:14px}
+.mv .up{color:var(--led-green);text-shadow:0 0 6px rgba(53,224,122,.6)}
+.mv .dn{color:var(--led-red);text-shadow:0 0 6px rgba(255,50,54,.6)}
+.mv .eq{color:#4a4c4f}
+.row .pt{text-align:right}
+.row .pt .seg{height:32px}
+/* podium */
+.row.p1,.row.p2,.row.p3{min-height:64px}
+.row.p1{background:linear-gradient(90deg,rgba(245,217,10,.14),transparent 70%)}
+.row.p2{background:linear-gradient(90deg,rgba(220,220,220,.10),transparent 70%)}
+.row.p3{background:linear-gradient(90deg,rgba(205,127,50,.13),transparent 70%)}
+.row.p1::before,.row.p2::before,.row.p3::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+.row.p1::before{background:var(--led-yellow)}.row.p2::before{background:#d9d9d9}.row.p3::before{background:#cd7f32}
+.row.p1 .pt .seg{height:38px}
+.row.p1 .rk{font-size:38px;color:var(--led-yellow)}.row.p2 .rk{font-size:34px;color:#e2e2e2}.row.p3 .rk{font-size:34px;color:#e0975a}
+.row.p1 .nm b{font-size:17px}
+.row.flash{animation:flip .55s cubic-bezier(.2,.8,.2,1) forwards,flash 1.6s ease-out .3s}
+@keyframes flash{0%{box-shadow:inset 0 0 0 999px rgba(208,38,39,.35)}100%{box-shadow:inset 0 0 0 999px rgba(208,38,39,0)}}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;font-family:Anton;font-size:24px;color:var(--led-white);text-transform:uppercase;margin-bottom:6px;font-weight:400}
+
+/* ---------- ticker ---------- */
+.ticker{margin-top:18px;background:#060606;border:1px solid #000;border-radius:10px;overflow:hidden;display:flex;align-items:stretch;
+  box-shadow:0 0 0 1px #232426 inset}
+.ticker .tag{background:var(--red);font-family:Anton;text-transform:uppercase;padding:10px 14px;font-size:16px;white-space:nowrap;display:flex;align-items:center}
+.ticker .track{overflow:hidden;flex:1;position:relative;display:flex;align-items:center}
+.ticker .move{display:inline-flex;gap:40px;white-space:nowrap;padding-left:100%;animation:scroll 32s linear infinite;
+  font-family:"Share Tech Mono",monospace;font-size:15px;color:var(--led-yellow);text-shadow:0 0 6px rgba(245,217,10,.55)}
+.ticker .move b{color:var(--led-green);font-weight:400}
+@keyframes scroll{to{transform:translateX(-100%)}}
+footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:14px;color:var(--muted);font-size:12px;font-family:"Share Tech Mono",monospace;letter-spacing:.08em}
+
+@media (max-width:860px){
+  header{grid-template-columns:1fr}
+  .clock{justify-self:start}
+  .leaders{grid-template-columns:1fr}
+  .tabs{display:flex}
+  .boards{grid-template-columns:1fr}
+  .board{display:none}.board.show{display:block}
+}
+@media (max-width:420px){
+  .cols,.row{grid-template-columns:48px 1fr 40px 80px;gap:8px;padding:0 10px}
+  .row .rk{font-size:24px}.row .pt .seg{height:26px}
+  .row.p1 .rk{font-size:30px}.row.p1 .pt .seg{height:30px}
+}
+@media (prefers-reduced-motion:reduce){
+  .row{animation:none;opacity:1;transform:none}.ticker .move{animation:none;padding-left:16px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><span class="live"><i></i>LIVE</span><span class="demo">DEMO DATA</span><span>Iowa Select VBC · 2026-27</span></div>
+      <h1 id="title">Leaderboard <span>Challenge</span></h1>
+      <div class="sub">Who finishes the season on top?</div>
+    </div>
+    <div class="clock">
+      <div id="days" class="seg c-red"></div>
+      <div class="lbl">DAYS LEFT IN THE SEASON</div>
+    </div>
+  </header>
+
+  <section class="leaders">
+    <div class="lead"><div class="crown">#1</div><div><div class="k">TOP TEAM</div><div class="n" id="ltName">—</div><div class="t" id="ltSub">&nbsp;</div></div><div id="ltPts" class="seg c-red"></div></div>
+    <div class="lead"><div class="crown">#1</div><div><div class="k">TOP PLAYER</div><div class="n" id="lpName">—</div><div class="t" id="lpSub">&nbsp;</div></div><div id="lpPts" class="seg c-red"></div></div>
+  </section>
+
+  <div class="tabs"><button class="on" data-t="teams">Teams</button><button data-t="players">Players</button></div>
+
+  <section class="boards">
+    <div class="board show" id="teams">
+      <h2>Team Standings <small id="tCount"></small></h2>
+      <div class="cols"><span>RANK</span><span>TEAM</span><span>MOVE</span><span>POINTS</span></div>
+      <div class="rows"></div>
+    </div>
+    <div class="board" id="players">
+      <h2>Player Standings <small>TOP 30</small></h2>
+      <div class="cols"><span>RANK</span><span>PLAYER</span><span>MOVE</span><span>POINTS</span></div>
+      <div class="rows"></div>
+    </div>
+  </section>
+
+  <div class="ticker"><div class="tag">Hot This Week</div><div class="track"><div class="move" id="ticker"></div></div></div>
+  <footer><span id="updated">&nbsp;</span><span>MOVE = change in rank over the last 7 days</span></footer>
+</div>
+
+<script>
+/* ===================================================================
+   CONNECT TO THE GOOGLE SHEET
+   Paste the "Publish to web" CSV link for the Board tab between the quotes.
+   Leave it empty to show demo data.
+   =================================================================== */
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDYM1HnbHa3lWrsaF7IGPhFh6cirtAOPudab0DhLVoSt4d2aT3TvyEAq01uH71oj-yFx3UthPnfBVY/pub?gid=3&single=true&output=csv";
+const REFRESH_SECONDS = 120;
+
+/* ---------- seven-segment digits ---------- */
+const H=1.15;
+const hs=(x1,x2,y)=>`${x1},${y} ${x1+H},${y-H} ${x2-H},${y-H} ${x2},${y} ${x2-H},${y+H} ${x1+H},${y+H}`;
+const vs=(x,y1,y2)=>`${x},${y1} ${x+H},${y1+H} ${x+H},${y2-H} ${x},${y2} ${x-H},${y2-H} ${x-H},${y1+H}`;
+const SEG={a:hs(2.6,11.4,1.5),b:vs(12.5,2.6,11.4),c:vs(12.5,12.6,21.4),d:hs(2.6,11.4,22.5),e:vs(1.5,12.6,21.4),f:vs(1.5,2.6,11.4),g:hs(2.6,11.4,12)};
+const MAP={"0":"abcdef","1":"bc","2":"abged","3":"abgcd","4":"fgbc","5":"afgcd","6":"afgedc","7":"abc","8":"abcdefg","9":"abcdfg","-":"g"," ":""};
+function digit(ch){
+  const lit=MAP[ch]??"";
+  return `<svg viewBox="0 0 14 24" aria-hidden="true">${Object.entries(SEG).map(([k,p])=>`<polygon class="${lit.includes(k)?"on":"off"}" points="${p}"/>`).join("")}</svg>`;
+}
+function setSeg(el,value,width){
+  let s=String(value);
+  if(width) s=s.padStart(width," ");
+  el.innerHTML=[...s].map(digit).join("");
+  el.setAttribute("aria-label",String(value).trim());
+  el.setAttribute("role","img");
+}
+/* count-up animation for LED numbers */
+function countTo(el,target,width,ms=1100){
+  target=Math.round(Number(target)||0);
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(reduce||target===0){setSeg(el,target,width);return}
+  const t0=performance.now();
+  (function step(t){
+    const p=Math.min(1,(t-t0)/ms), e=1-Math.pow(1-p,3);
+    setSeg(el,Math.round(target*e),width);
+    if(p<1) requestAnimationFrame(step);
+  })(t0);
+}
+
+/* ---------- CSV ---------- */
+function parseCSV(txt){
+  const rows=[];let row=[],cell="",q=false;
+  for(let i=0;i<txt.length;i++){
+    const c=txt[i];
+    if(q){ if(c=='"'){ if(txt[i+1]=='"'){cell+='"';i++} else q=false } else cell+=c }
+    else if(c=='"') q=true;
+    else if(c==','){row.push(cell);cell=""}
+    else if(c=='\n'||c=='\r'){ if(c=='\r'&&txt[i+1]=='\n') i++; row.push(cell);rows.push(row);row=[];cell="" }
+    else cell+=c;
+  }
+  if(cell!==""||row.length){row.push(cell);rows.push(row)}
+  return rows;
+}
+function fromBoard(rows){
+  const body=rows.slice(1);
+  const num=v=>Number(String(v).replace(/,/g,""))||0;
+  const teams=body.filter(r=>r[1]).map(r=>({rank:num(r[0]),name:r[1],sub:r[2],pts:num(r[3]),wk:num(r[4]),move:num(r[5])}));
+  const players=body.filter(r=>r[8]).map(r=>({rank:num(r[7]),name:r[8],sub:r[9],pts:num(r[10]),wk:num(r[11]),move:num(r[12])}));
+  const set={};body.forEach(r=>{if(r[14]) set[r[14]]=r[15]||""});
+  return {teams,players,settings:set};
+}
+
+/* ---------- demo data (shown until the sheet is connected) ---------- */
+function demo(){
+  const teams=["11 Mizuno","12 Mizuno","12 Black","13 Mizuno","13 Black","13 Reid","13 White","14 Mizuno","14 Black","14 Reid","14 White","15 Mizuno","15 Black","15 Reid","15 White","16 Mizuno","16 Black","16 Reid","16 White","17 Mizuno","17 Black","17 Reid","17 White","18 Mizuno","18 Black","Ready Program"];
+  const prog=t=>t.split(" ").slice(-1)[0].replace(/\d/,"")||"Ready";
+  let seed=7;const rnd=()=>((seed=(seed*9301+49297)%233280)/233280);
+  const T=teams.map(n=>({name:n,sub:n.startsWith("Ready")?"Ready":prog(n),pts:Math.round(40+rnd()*420),wk:Math.round(rnd()*45),move:Math.round(rnd()*6-3)}));
+  const first=["Avery","Brooke","Callie","Delaney","Ella","Finley","Grace","Harper","Isla","Jade","Kenzie","Lainey","Maya","Nora","Olivia","Paige","Quinn","Reese","Sadie","Tatum","Una","Violet","Willa","Xena","Yara","Zoe","Addie","Blake","Cora","Drew","Emery","Faith"];
+  const last=["Sample","Example","Demo","Placeholder","Tester","Preview"];
+  const P=first.map((f,i)=>({name:`${f} ${last[i%last.length]}`,sub:teams[Math.floor(rnd()*teams.length)],pts:Math.round(10+rnd()*160),wk:Math.round(rnd()*25),move:Math.round(rnd()*8-4)}));
+  const rank=a=>{a.sort((x,y)=>y.pts-x.pts||x.name.localeCompare(y.name));a.forEach((r,i)=>r.rank=(i&&a[i-1].pts===r.pts)?a[i-1].rank:i+1);return a};
+  [T,P].forEach(a=>{rank(a);if(a[0].move<0)a[0].move=1});
+  return {teams:T,players:P.slice(0,30),settings:{"Challenge":"Iowa Select Leaderboard Challenge","Season Ends":"2027-04-11","Last Points Added":new Date().toISOString().slice(0,10)}};
+}
+
+/* ---------- render ---------- */
+let last={};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function moveHTML(m){
+  if(m>0) return `<span class="up">▲${m}</span>`;
+  if(m<0) return `<span class="dn">▼${-m}</span>`;
+  return `<span class="eq">—</span>`;
+}
+function renderBoard(id,list,emptyMsg){
+  const box=document.querySelector(`#${id} .rows`);
+  if(!list.length){box.innerHTML=`<div class="empty"><b>Scoreboard is set</b>${emptyMsg}</div>`;return}
+  const prev=last[id]||{};
+  box.innerHTML=list.map((r,i)=>{
+    const pod=r.rank<=3&&r.pts>0?` p${r.rank}`:"";
+    const changed=prev[r.name]!==undefined&&prev[r.name]!==r.pts?" flash":"";
+    const wk=r.wk>0?`<span class="wk">+${r.wk} THIS WEEK</span>`:"";
+    return `<div class="row${pod}${changed}" style="animation-delay:${Math.min(i,30)*35}ms">
+      <div class="rk">${r.rank}</div>
+      <div class="nm"><b title="${esc(r.name)}">${esc(r.name)}</b><em>${esc(r.sub||"")}</em>${wk}</div>
+      <div class="mv">${moveHTML(r.move)}</div>
+      <div class="pt"><span class="seg c-red" data-n="${r.pts}" data-w="4"></span></div></div>`;
+  }).join("");
+  box.querySelectorAll(".pt .seg").forEach(el=>{
+    const n=+el.dataset.n, was=prev[el.closest(".row").querySelector("b").title];
+    if(was===undefined||was!==n) countTo(el,n,+el.dataset.w); else setSeg(el,n,+el.dataset.w);
+  });
+  last[id]=Object.fromEntries(list.map(r=>[r.name,r.pts]));
+}
+function render(d){
+  const s=d.settings||{};
+  if(s["Challenge"]){
+    const words=s["Challenge"].trim().split(/\s+/), tail=words.pop();
+    document.getElementById("title").innerHTML=`${esc(words.join(" "))} <span>${esc(tail)}</span>`;
+    document.title=s["Challenge"];
+  }
+  // countdown
+  let days="";
+  if(s["Season Ends"]){
+    const end=new Date(s["Season Ends"]+"T23:59:59");
+    days=Math.max(0,Math.ceil((end-new Date())/864e5));
+  }
+  setSeg(document.getElementById("days"),days===""?"---":days,3);
+
+  const T=d.teams.slice(0,30), P=d.players.slice(0,30);
+  document.getElementById("tCount").textContent=`${T.length} TEAMS`;
+  const tl=T[0]&&T[0].pts>0?T[0]:null, pl=P[0]&&P[0].pts>0?P[0]:null;
+  document.getElementById("ltName").textContent=tl?tl.name:"Up for grabs";
+  document.getElementById("ltSub").textContent=tl?(tl.sub||""):"First points coming soon";
+  document.getElementById("lpName").textContent=pl?pl.name:"Up for grabs";
+  document.getElementById("lpSub").textContent=pl?(pl.sub||""):"First points coming soon";
+  countTo(document.getElementById("ltPts"),tl?tl.pts:0,4);
+  countTo(document.getElementById("lpPts"),pl?pl.pts:0,4);
+
+  renderBoard("teams",T,"Every team starts at zero. First points coming soon.");
+  renderBoard("players",P,"Players show up here as soon as they earn points.");
+
+  // ticker: biggest gains this week
+  const hot=[...T.map(r=>({...r,kind:"team"})),...P.map(r=>({...r,kind:"player"}))].filter(r=>r.wk>0).sort((a,b)=>b.wk-a.wk).slice(0,10);
+  const tk=document.getElementById("ticker");
+  tk.innerHTML=hot.length?hot.map(r=>`<span>${esc(r.name.toUpperCase())}${r.kind==="player"&&r.sub?" · "+esc(r.sub):""} <b>+${r.wk}</b></span>`).join("")
+    :"<span>NEW WEEK, NEW POINTS. WHO MAKES THE MOVE?</span>";
+
+  const lp=s["Last Points Added"];
+  document.getElementById("updated").textContent=lp?`LAST POINTS ADDED ${lp}`:" ";
+}
+
+async function load(){
+  if(!CSV_URL){document.body.classList.add("is-demo");render(demo());return}
+  try{
+    const r=await fetch(CSV_URL+(CSV_URL.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});
+    if(!r.ok) throw new Error(r.status);
+    document.body.classList.remove("is-demo");
+    render(fromBoard(parseCSV(await r.text())));
+  }catch(e){
+    console.warn("Leaderboard: couldn't reach the sheet.",e);
+    if(!last.teams){document.body.classList.add("is-demo");render(demo())}
+  }
+}
+
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".board").forEach(x=>x.classList.toggle("show",x.id===b.dataset.t));
+  postHeight();
+});
+/* lets a website iframe size itself to the page (optional) */
+function postHeight(){try{parent.postMessage({isLeaderboardHeight:document.documentElement.scrollHeight},"*")}catch(e){}}
+new ResizeObserver(postHeight).observe(document.body);
+
+load();
+setInterval(load,REFRESH_SECONDS*1000);
+</script>
+</body>
+</html>
