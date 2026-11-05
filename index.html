@@ -74,6 +74,18 @@ h1 span{color:var(--red)}
 .lead .seg{height:clamp(40px,5vw,56px)}
 .crown{position:absolute;right:-10px;top:-18px;font-family:Anton;font-size:120px;color:rgba(208,38,39,.08);pointer-events:none}
 
+
+/* ---------- prizes ---------- */
+.prizes{margin:0 0 18px;border-radius:12px;padding:14px 18px 16px;background:linear-gradient(120deg,rgba(245,217,10,.10),rgba(245,217,10,.02) 60%);border:1px solid rgba(245,217,10,.35)}
+.prizes[hidden]{display:none}
+.prizes .ph{display:flex;align-items:center;gap:10px;font-family:Anton,Impact,"Arial Narrow Bold",sans-serif;font-size:22px;text-transform:uppercase;letter-spacing:.03em;color:var(--led-yellow);margin-bottom:10px}
+.prizes .ph svg{width:24px;height:24px;fill:var(--led-yellow);filter:drop-shadow(0 0 6px rgba(245,217,10,.6))}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.prize{background:rgba(0,0,0,.35);border:1px solid #2a2b2d;border-radius:10px;padding:12px 14px}
+.prize[hidden]{display:none}
+.prize .pk{font-family:"Share Tech Mono",monospace;font-size:12px;letter-spacing:.22em;color:var(--led-yellow);text-transform:uppercase}
+.prize .pv{font-weight:800;font-size:16px;line-height:1.35;margin-top:4px;color:var(--led-white)}
+
 /* ---------- tabs (mobile) ---------- */
 .tabs{display:none;gap:8px;margin-bottom:12px}
 .tabs button{flex:1;font:700 14px Montserrat;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
@@ -135,6 +147,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-
   header{grid-template-columns:1fr}
   .clock{justify-self:start}
   .leaders{grid-template-columns:1fr}
+  .pgrid{grid-template-columns:1fr}
   .tabs{display:flex}
   .boards{grid-template-columns:1fr}
   .board{display:none}.board.show{display:block}
@@ -166,6 +179,14 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-
   <section class="leaders">
     <div class="lead"><div class="crown">#1</div><div><div class="k">TOP TEAM</div><div class="n" id="ltName">—</div><div class="t" id="ltSub">&nbsp;</div></div><div id="ltPts" class="seg c-red"></div></div>
     <div class="lead"><div class="crown">#1</div><div><div class="k">TOP PLAYER</div><div class="n" id="lpName">—</div><div class="t" id="lpSub">&nbsp;</div></div><div id="lpPts" class="seg c-red"></div></div>
+  </section>
+
+  <section class="prizes" id="prizes" hidden>
+    <div class="ph"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10v2h4v3a5 5 0 0 1-5 5h-.3A5 5 0 0 1 13 14.9V18h3v2H8v-2h3v-3.1A5 5 0 0 1 8.3 12H8a5 5 0 0 1-5-5V4h4V2zm10 4v4a3 3 0 0 0 2-3V6h-2zM5 6v1a3 3 0 0 0 2 3V6H5z"/></svg>Playing for the Prize</div>
+    <div class="pgrid">
+      <div class="prize" id="tPrize" hidden><div class="pk">Team Champion</div><div class="pv"></div></div>
+      <div class="prize" id="pPrize" hidden><div class="pk">Player Champion</div><div class="pv"></div></div>
+    </div>
   </section>
 
   <div class="tabs"><button class="on" data-t="teams">Teams</button><button data-t="players">Players</button></div>
@@ -260,7 +281,7 @@ function demo(){
   const P=first.map((f,i)=>({name:`${f} ${last[i%last.length]}`,sub:teams[Math.floor(rnd()*teams.length)],pts:Math.round(10+rnd()*160),wk:Math.round(rnd()*25),move:Math.round(rnd()*8-4)}));
   const rank=a=>{a.sort((x,y)=>y.pts-x.pts||x.name.localeCompare(y.name));a.forEach((r,i)=>r.rank=(i&&a[i-1].pts===r.pts)?a[i-1].rank:i+1);return a};
   [T,P].forEach(a=>{rank(a);if(a[0].move<0)a[0].move=1});
-  return {teams:T,players:P.slice(0,30),settings:{"Challenge":"Iowa Select Leaderboard Challenge","Season Ends":"2027-04-11","Last Points Added":new Date().toISOString().slice(0,10)}};
+  return {teams:T,players:P.slice(0,30),settings:{"Challenge":"Iowa Select Leaderboard Challenge","Season Ends":"2027-04-11","Last Points Added":new Date().toISOString().slice(0,10),"Team Prize":"A $100 Lululemon gift card for every player and coach on the team, plus new knee pads for every player","Player Prize":"A $100 Ulta Beauty gift card"}};
 }
 
 /* ---------- render ---------- */
@@ -324,6 +345,11 @@ function render(d){
   const tk=document.getElementById("ticker");
   tk.innerHTML=hot.length?hot.map(r=>`<span>${esc(r.name.toUpperCase())}${r.kind==="player"&&r.sub?" · "+esc(r.sub):""} <b>+${r.wk}</b></span>`).join("")
     :"<span>NEW WEEK, NEW POINTS. WHO MAKES THE MOVE?</span>";
+
+  // prizes
+  const setPrize=(id,txt)=>{const el=document.getElementById(id);el.hidden=!txt;el.querySelector(".pv").textContent=txt||""};
+  setPrize("tPrize",s["Team Prize"]); setPrize("pPrize",s["Player Prize"]);
+  document.getElementById("prizes").hidden=!(s["Team Prize"]||s["Player Prize"]);
 
   const lp=s["Last Points Added"];
   document.getElementById("updated").textContent=lp?`LAST POINTS ADDED ${lp}`:" ";
