@@ -27,7 +27,6 @@ body{
   background-color:var(--bg);
   background-image:radial-gradient(rgba(255,255,255,.045) 1px,transparent 1.2px);
   background-size:6px 6px;
-  min-height:100vh;
   padding:clamp(12px,3vw,32px);
 }
 .wrap{max-width:1240px;margin:0 auto}
@@ -337,6 +336,7 @@ async function load(){
     if(!r.ok) throw new Error(r.status);
     document.body.classList.remove("is-demo");
     render(fromBoard(parseCSV(await r.text())));
+    postHeight();
   }catch(e){
     console.warn("Leaderboard: couldn't reach the sheet.",e);
     if(!last.teams){document.body.classList.add("is-demo");render(demo())}
@@ -349,8 +349,14 @@ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
   postHeight();
 });
 /* lets a website iframe size itself to the page (optional) */
-function postHeight(){try{parent.postMessage({isLeaderboardHeight:document.documentElement.scrollHeight},"*")}catch(e){}}
-new ResizeObserver(postHeight).observe(document.body);
+function postHeight(){
+  try{
+    const w=document.querySelector(".wrap"), cs=getComputedStyle(document.body);
+    const h=Math.ceil(w.getBoundingClientRect().height+parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom));
+    parent.postMessage({isLeaderboardHeight:h},"*");
+  }catch(e){}
+}
+new ResizeObserver(postHeight).observe(document.querySelector(".wrap"));
 
 load();
 setInterval(load,REFRESH_SECONDS*1000);
