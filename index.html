@@ -86,6 +86,36 @@ h1 span{color:var(--red)}
 .prize .pk{font-family:"Share Tech Mono",monospace;font-size:12px;letter-spacing:.22em;color:var(--led-yellow);text-transform:uppercase}
 .prize .pv{font-weight:800;font-size:16px;line-height:1.35;margin-top:4px;color:var(--led-white)}
 
+/* ---------- weekly challenge cards (top of each board) ---------- */
+.chal{margin:14px 14px 6px;border-radius:12px;padding:14px 16px 16px;
+  background:linear-gradient(120deg,rgba(208,38,39,.20),rgba(208,38,39,.04) 65%);border:1px solid rgba(208,38,39,.55)}
+.chal[hidden]{display:none}
+.chal .ch{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px 12px}
+.chal .ck{font-family:"Share Tech Mono",monospace;font-size:12px;letter-spacing:.22em;color:var(--led-yellow);text-transform:uppercase}
+.chal .cd{font-family:"Share Tech Mono",monospace;font-size:12px;letter-spacing:.12em;color:var(--led-white);text-transform:uppercase;
+  background:rgba(0,0,0,.45);border:1px solid #2a2b2d;border-radius:4px;padding:2px 8px}
+.chal .cd b{color:var(--led-green);font-weight:400}
+.chal .cm{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:10px}
+.chal .ct{font-family:Anton,Impact,"Arial Narrow Bold",sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(22px,2.6vw,30px);line-height:1.05;letter-spacing:.01em}
+.chal .cx{font-size:15px;font-weight:500;line-height:1.45;color:#d9d6cf;margin-top:6px;white-space:pre-line}
+.chal .cp{text-align:center;background:#060606;border:1px solid #000;border-radius:10px;padding:8px 12px 6px;box-shadow:0 0 0 1px #262729 inset}
+.chal .cp .seg{height:40px}
+.chal .cp .pl{font-family:"Share Tech Mono",monospace;font-size:11px;letter-spacing:.25em;color:var(--muted);margin-top:4px}
+.chal .cp .ptx{font-family:Anton,Impact,sans-serif;font-size:26px;color:var(--led-yellow)}
+.chal .hw{margin-top:12px;background:rgba(0,0,0,.35);border:1px solid #2a2b2d;border-radius:10px;padding:10px 12px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px 14px;flex-wrap:wrap}
+.chal .hw[hidden]{display:none}
+.chal .hk{font-family:"Share Tech Mono",monospace;font-size:11px;letter-spacing:.22em;color:var(--led-yellow);text-transform:uppercase}
+.chal .hv{font-weight:700;font-size:15px;line-height:1.4;margin-top:2px;white-space:pre-line}
+.chal .go{display:inline-block;font:800 14px Montserrat,sans-serif;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;
+  color:#fff;background:var(--red);border-radius:8px;padding:10px 16px;white-space:nowrap}
+.chal .go:hover{filter:brightness(1.12)}
+.chal .go[hidden]{display:none}
+/* "drops Sunday" state */
+.chal.soon{background:linear-gradient(120deg,rgba(245,217,10,.10),rgba(245,217,10,.02) 65%);border-color:rgba(245,217,10,.35)}
+.chal.soon .cm{grid-template-columns:1fr}
+.chal.soon .cp,.chal.soon .hw,.chal.soon .cx{display:none}
+
 /* ---------- tabs (mobile) ---------- */
 .tabs{display:none;gap:8px;margin-bottom:12px}
 .tabs button{flex:1;font:700 14px Montserrat;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
@@ -153,6 +183,9 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-
   .board{display:none}.board.show{display:block}
 }
 @media (max-width:420px){
+  .chal{margin:10px 10px 4px;padding:12px 12px 14px}
+  .chal .cp .seg{height:32px}
+  .chal .go{width:100%;text-align:center}
   .cols,.row{grid-template-columns:48px 1fr 40px 80px;gap:8px;padding:0 10px}
   .row .rk{font-size:24px}.row .pt .seg{height:26px}
   .row.p1 .rk{font-size:30px}.row.p1 .pt .seg{height:30px}
@@ -193,11 +226,13 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-
 
   <section class="boards">
     <div class="board show" id="teams">
+      <div class="chal" id="tChal" hidden></div>
       <h2>Team Standings <small id="tCount"></small></h2>
       <div class="cols"><span>RANK</span><span>TEAM</span><span>MOVE</span><span>POINTS</span></div>
       <div class="rows"></div>
     </div>
     <div class="board" id="players">
+      <div class="chal" id="pChal" hidden></div>
       <h2>Player Standings <small>TOP 30</small></h2>
       <div class="cols"><span>RANK</span><span>PLAYER</span><span>MOVE</span><span>POINTS</span></div>
       <div class="rows"></div>
@@ -267,7 +302,10 @@ function fromBoard(rows){
   const teams=body.filter(r=>r[1]).map(r=>({rank:num(r[0]),name:r[1],sub:r[2],pts:num(r[3]),wk:num(r[4]),move:num(r[5])}));
   const players=body.filter(r=>r[8]).map(r=>({rank:num(r[7]),name:r[8],sub:r[9],pts:num(r[10]),wk:num(r[11]),move:num(r[12])}));
   const set={};body.forEach(r=>{if(r[14]) set[r[14]]=r[15]||""});
-  return {teams,players,settings:set};
+  // weekly challenges: Board columns R–Y (Type, Starts, Ends, Title, Details, Points, How, Link)
+  const challenges=body.filter(r=>(r[17]==="Team"||r[17]==="Player")&&r[18]&&r[20])
+    .map(r=>({type:r[17],start:r[18],end:r[19],title:r[20],details:r[21]||"",pts:r[22]||"",how:r[23]||"",link:r[24]||""}));
+  return {teams,players,settings:set,challenges};
 }
 
 /* ---------- demo data (shown until the sheet is connected) ---------- */
@@ -281,7 +319,14 @@ function demo(){
   const P=first.map((f,i)=>({name:`${f} ${last[i%last.length]}`,sub:teams[Math.floor(rnd()*teams.length)],pts:Math.round(10+rnd()*160),wk:Math.round(rnd()*25),move:Math.round(rnd()*8-4)}));
   const rank=a=>{a.sort((x,y)=>y.pts-x.pts||x.name.localeCompare(y.name));a.forEach((r,i)=>r.rank=(i&&a[i-1].pts===r.pts)?a[i-1].rank:i+1);return a};
   [T,P].forEach(a=>{rank(a);if(a[0].move<0)a[0].move=1});
-  return {teams:T,players:P.slice(0,30),settings:{"Challenge":"Iowa Select Leaderboard Challenge","Season Ends":"2027-04-11","Last Points Added":new Date().toISOString().slice(0,10),"Team Prize":"A $100 Lululemon gift card for every player and coach on the team, plus new knee pads for every player","Player Prize":"A $100 Ulta Beauty gift card"}};
+  const iso=dt=>`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
+  const sun=new Date();sun.setDate(sun.getDate()-sun.getDay());
+  const sat=new Date(sun);sat.setDate(sun.getDate()+6);
+  const challenges=[
+    {type:"Team",start:iso(sun),end:iso(sat),title:"Sample: Team Wall Sit",details:"Sample challenge. Every player holds a wall sit together for 2 minutes.",pts:"25",how:"Your coach sends Frank a team photo or video.",link:""},
+    {type:"Player",start:iso(sun),end:iso(sat),title:"Sample: 100 Serves",details:"Sample challenge. Get 100 serves in outside of practice this week.",pts:"10",how:"Post a photo in your team GroupMe and tag your coach.",link:"https://www.iowaselectvbc.com"}
+  ];
+  return {teams:T,players:P.slice(0,30),challenges,settings:{"Challenge":"Iowa Select Leaderboard Challenge","Season Ends":"2027-04-11","Last Points Added":new Date().toISOString().slice(0,10),"Team Prize":"A $100 Lululemon gift card for every player and coach on the team, plus new knee pads for every player","Player Prize":"A $100 Ulta Beauty gift card"}};
 }
 
 /* ---------- render ---------- */
@@ -312,6 +357,48 @@ function renderBoard(id,list,emptyMsg){
   });
   last[id]=Object.fromEntries(list.map(r=>[r.name,r.pts]));
 }
+/* ---------- weekly challenge card ----------
+   Picks this week's challenge by date (Sunday 12:00 AM to Saturday 11:59 PM, viewer's clock).
+   No challenge this week? Shows when the next one drops. Nothing scheduled? Card hides. */
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DAY=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+function day(iso,endOfDay){
+  const [y,m,dd]=String(iso).split("-").map(Number);
+  if(!y||!m||!dd) return null;
+  return endOfDay?new Date(y,m-1,dd,23,59,59):new Date(y,m-1,dd);
+}
+const short=dt=>`${MON[dt.getMonth()]} ${dt.getDate()}`;
+function renderChallenge(id,type,list){
+  const el=document.getElementById(id), now=new Date();
+  const mine=list.filter(c=>c.type===type).map(c=>({...c,s:day(c.start),e:day(c.end,true)}))
+    .filter(c=>c.s&&c.e&&c.e>=now).sort((a,b)=>a.s-b.s);
+  const c=mine[0];
+  if(!c){el.hidden=true;el.innerHTML="";return}
+  el.hidden=false;
+  const label=type==="Team"?"Team":"Player";
+  if(c.s>now){
+    el.className="chal soon";
+    el.innerHTML=`<div class="ch"><span class="ck">Next ${label} Challenge</span></div>
+      <div class="cm"><div><div class="ct">Drops ${DAY[c.s.getDay()]}, ${short(c.s)}</div></div></div>`;
+    return;
+  }
+  el.className="chal";
+  const left=Math.max(0,Math.ceil((c.e-now)/864e5));
+  const leftTxt=left<=1?"<b>LAST DAY</b>":`<b>${left} DAYS LEFT</b>`;
+  const n=Number(String(c.pts).replace(/,/g,""));
+  const ptsHTML=c.pts===""?"":(Number.isFinite(n)&&n>0
+    ?`<div class="cp"><span class="seg c-yel" data-p="${n}"></span><div class="pl">POINTS</div></div>`
+    :`<div class="cp"><div class="ptx">${esc(c.pts)}</div><div class="pl">POINTS</div></div>`);
+  const safeLink=/^https?:\/\//i.test(c.link)?c.link:"";
+  el.innerHTML=`<div class="ch"><span class="ck">This Week's ${label} Challenge</span>
+      <span class="cd">${short(c.s)} – ${short(c.e)} · ${leftTxt}</span></div>
+    <div class="cm"><div><div class="ct">${esc(c.title)}</div>${c.details?`<div class="cx">${esc(c.details)}</div>`:""}</div>${ptsHTML}</div>
+    <div class="hw"${c.how||safeLink?"":" hidden"}><div><div class="hk">How to turn it in</div><div class="hv">${esc(c.how||"Use the button to submit.")}</div></div>
+      <a class="go"${safeLink?` href="${esc(safeLink)}"`:" hidden"} target="_blank" rel="noopener">Turn it in →</a></div>`;
+  const seg=el.querySelector(".seg[data-p]");
+  if(seg) setSeg(seg,seg.dataset.p);
+}
+
 function render(d){
   const s=d.settings||{};
   if(s["Challenge"]){
@@ -350,6 +437,9 @@ function render(d){
   const setPrize=(id,txt)=>{const el=document.getElementById(id);el.hidden=!txt;el.querySelector(".pv").textContent=txt||""};
   setPrize("tPrize",s["Team Prize"]); setPrize("pPrize",s["Player Prize"]);
   document.getElementById("prizes").hidden=!(s["Team Prize"]||s["Player Prize"]);
+
+  renderChallenge("tChal","Team",d.challenges||[]);
+  renderChallenge("pChal","Player",d.challenges||[]);
 
   const lp=s["Last Points Added"];
   document.getElementById("updated").textContent=lp?`LAST POINTS ADDED ${lp}`:" ";
